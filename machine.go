@@ -365,15 +365,16 @@ func (m Machine) toNode(baseDomain string, dnsConfig *tailcfg.DNSConfig, include
 	}
 
 	addrs := []netaddr.IPPrefix{}
-	ip, err := netaddr.ParseIPPrefix(fmt.Sprintf("%s/32", m.IPAddress))
+	nodeAddr, err := netaddr.ParseIP(m.IPAddress)
 	if err != nil {
 		log.Trace().
 			Str("func", "toNode").
 			Str("ip", m.IPAddress).
-			Msgf("Failed to parse IP Prefix from IP: %s", m.IPAddress)
+			Msgf("Failed to parse machine IP: %s", m.IPAddress)
 		return nil, err
 	}
-	addrs = append(addrs, ip) // missing the ipv6 ?
+	ip := netaddr.IPPrefixFrom(nodeAddr, nodeAddr.BitLen())
+	addrs = append(addrs, ip)
 
 	allowedIPs := []netaddr.IPPrefix{}
 	allowedIPs = append(allowedIPs, ip) // we append the node own IP, as it is required by the clients

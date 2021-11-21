@@ -24,4 +24,3 @@ lint:
 
 compress: build
 	upx --brute headscale
-

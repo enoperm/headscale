@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -376,7 +377,7 @@ func (h *Headscale) handleAuthKey(
 		Str("func", "handleAuthKey").
 		Str("machine", m.Name).
 		Msg("Authentication key was valid, proceeding to acquire an IP address")
-	ip, err := h.getAvailableIP()
+	ips, err := h.getAvailableIPs()
 	if err != nil {
 		log.Error().
 			Str("func", "handleAuthKey").
@@ -385,14 +386,20 @@ func (h *Headscale) handleAuthKey(
 		machineRegistrations.WithLabelValues("new", "authkey", "error", m.Namespace.Name).Inc()
 		return
 	}
+
+	addressStrings := make([]string, 0, len(ips))
+	for _, ip := range ips {
+		addressStrings = append(addressStrings, ip.String())
+	}
+
 	log.Info().
 		Str("func", "handleAuthKey").
 		Str("machine", m.Name).
-		Str("ip", ip.String()).
-		Msgf("Assigning %s to %s", ip, m.Name)
+		Str("ip", fmt.Sprintf("%v", ips)).
+		Msgf("Assigning %s to %s", ips, m.Name)
 
 	m.AuthKeyID = uint(pak.ID)
-	m.IPAddress = ip.String()
+	m.IPAddresses = addressStrings
 	m.NamespaceID = pak.NamespaceID
 	m.NodeKey = wgkey.Key(req.NodeKey).HexString() // we update it just in case
 	m.Registered = true
@@ -420,6 +427,6 @@ func (h *Headscale) handleAuthKey(
 	log.Info().
 		Str("func", "handleAuthKey").
 		Str("machine", m.Name).
-		Str("ip", ip.String()).
+		Str("ips", strings.Join(addressStrings, ", ")).
 		Msg("Successfully authenticated via AuthKey")
 }

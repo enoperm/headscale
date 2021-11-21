@@ -88,7 +88,7 @@ func (s *Suite) TestPortNamespace(c *check.C) {
 
 	_, err = h.GetMachine("testnamespace", "testmachine")
 	c.Assert(err, check.NotNil)
-	ip, _ := h.getAvailableIP()
+	ips, _ := h.getAvailableIPs()
 	m := Machine{
 		ID:             0,
 		MachineKey:     "foo",
@@ -98,7 +98,7 @@ func (s *Suite) TestPortNamespace(c *check.C) {
 		NamespaceID:    n.ID,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddress:      ip.String(),
+		IPAddresses:    ips.ToStringSlice(),
 		AuthKeyID:      uint(pak.ID),
 	}
 	h.db.Save(&m)
@@ -116,7 +116,8 @@ func (s *Suite) TestPortNamespace(c *check.C) {
 	c.Assert((*rules)[0].DstPorts[0].Ports.Last, check.Equals, uint16(65535))
 	c.Assert((*rules)[0].SrcIPs, check.HasLen, 1)
 	c.Assert((*rules)[0].SrcIPs[0], check.Not(check.Equals), "not an ip")
-	c.Assert((*rules)[0].SrcIPs[0], check.Equals, ip.String())
+	c.Assert(len(ips), check.Equals, 1)
+	c.Assert((*rules)[0].SrcIPs[0], check.Equals, ips[0].String())
 }
 
 func (s *Suite) TestPortGroup(c *check.C) {
@@ -128,7 +129,7 @@ func (s *Suite) TestPortGroup(c *check.C) {
 
 	_, err = h.GetMachine("testnamespace", "testmachine")
 	c.Assert(err, check.NotNil)
-	ip, _ := h.getAvailableIP()
+	ips, _ := h.getAvailableIPs()
 	m := Machine{
 		ID:             0,
 		MachineKey:     "foo",
@@ -138,7 +139,7 @@ func (s *Suite) TestPortGroup(c *check.C) {
 		NamespaceID:    n.ID,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddress:      ip.String(),
+		IPAddresses:    ips.ToStringSlice(),
 		AuthKeyID:      uint(pak.ID),
 	}
 	h.db.Save(&m)
@@ -156,5 +157,6 @@ func (s *Suite) TestPortGroup(c *check.C) {
 	c.Assert((*rules)[0].DstPorts[0].Ports.Last, check.Equals, uint16(65535))
 	c.Assert((*rules)[0].SrcIPs, check.HasLen, 1)
 	c.Assert((*rules)[0].SrcIPs[0], check.Not(check.Equals), "not an ip")
-	c.Assert((*rules)[0].SrcIPs[0], check.Equals, ip.String())
+	c.Assert(len(ips), check.Equals, 1)
+	c.Assert((*rules)[0].SrcIPs[0], check.Equals, ips[0].String())
 }

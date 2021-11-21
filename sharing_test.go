@@ -23,7 +23,7 @@ func CreateNodeNamespace(c *check.C, namespace, node, key, IP string) (*Namespac
 		NamespaceID:    n1.ID,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddress:      IP,
+		IPAddresses:    []string{"100.64.0.1"},
 		AuthKeyID:      uint(pak1.ID),
 	}
 	h.db.Save(m1)
@@ -136,7 +136,7 @@ func (s *Suite) TestComplexSharingAcrossNamespaces(c *check.C) {
 		NamespaceID:    n1.ID,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddress:      "100.64.0.4",
+		IPAddresses:    []string{"100.64.0.4"},
 		AuthKeyID:      uint(pak4.ID),
 	}
 	h.db.Save(m4)
@@ -190,7 +190,7 @@ func (s *Suite) TestDeleteSharedMachine(c *check.C) {
 		NamespaceID:    n1.ID,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddress:      "100.64.0.4",
+		IPAddresses:    []string{"100.64.0.4"},
 		AuthKeyID:      uint(pak4n1.ID),
 	}
 	h.db.Save(m4)

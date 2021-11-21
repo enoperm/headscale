@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"encoding/hex"
 	"github.com/fatih/set"
 	"inet.af/netaddr"
 	"tailscale.com/tailcfg"
@@ -30,12 +31,62 @@ import (
 
 // From the netmask we can find out the wildcard bits (the bits that are not set in the netmask).
 // This allows us to then calculate the subnets included in the subsequent class block and generate the entries.
-func generateMagicDNSRootDomains(ipPrefix netaddr.IPPrefix, baseDomain string) ([]dnsname.FQDN, error) {
-	// TODO(juanfont): we are not handing out IPv6 addresses yet
-	// and in fact this is Tailscale.com's range (note the fd7a:115c:a1e0: range in the fc00::/7 network)
-	ipv6base := dnsname.FQDN("0.e.1.a.c.5.1.1.a.7.d.f.ip6.arpa.")
-	fqdns := []dnsname.FQDN{ipv6base}
+func generateMagicDNSRootDomains(ipPrefixes []netaddr.IPPrefix) []dnsname.FQDN {
+	fqdns := make([]dnsname.FQDN, 0, len(ipPrefixes))
+	for _, ipPrefix := range ipPrefixes {
+		var generateDnsRoot func(netaddr.IPPrefix) []dnsname.FQDN
+		switch ipPrefix.IP().BitLen() {
+		case 32:
+			generateDnsRoot = generateIPv4DNSRootDomain
+		case 128:
+			generateDnsRoot = generateIPv6DNSRootDomain
 
+		default:
+			panic(fmt.Sprintf("unsupported IP version with address length %d", ipPrefix.IP().BitLen()))
+		}
+
+		fqdns = append(fqdns, generateDnsRoot(ipPrefix)...)
+	}
+
+	return fqdns
+}
+
+func generateIPv6DNSRootDomain(ipPrefix netaddr.IPPrefix) (fqdns []dnsname.FQDN) {
+	networkAddress := ipPrefix.Masked().IP()
+	networkBits, _ := ipPrefix.IPNet().Mask.Size()
+
+	rawBytes := networkAddress.As16()
+
+	networkNibbles, wildcardBits := networkBits/4, networkBits%4
+	addressString := hex.EncodeToString(rawBytes[:])
+
+	var nibbleChars []string
+	for _, nibbleChar := range addressString[:networkNibbles] {
+		nibbleChars = append([]string{string(nibbleChar)}, nibbleChars...)
+	}
+
+	basedomain := strings.Join(nibbleChars, ".")
+	basedomain = fmt.Sprintf("%s.ip6.arpa.", basedomain)
+
+	if wildcardBits > 0 {
+		for i := 0; i < (1 << wildcardBits); i++ {
+			domain := fmt.Sprintf("%d.%s", i, basedomain)
+			fqdn, err := dnsname.ToFQDN(domain)
+			if err != nil {
+				fqdns = append(fqdns, fqdn)
+			}
+		}
+	} else {
+		fqdn, err := dnsname.ToFQDN(basedomain)
+		if err != nil {
+			fqdns = append(fqdns, fqdn)
+		}
+	}
+
+	return
+}
+
+func generateIPv4DNSRootDomain(ipPrefix netaddr.IPPrefix) (fqdns []dnsname.FQDN) {
 	// Conversion to the std lib net.IPnet, a bit easier to operate
 	netRange := ipPrefix.IPNet()
 	maskBits, _ := netRange.Mask.Size()
@@ -66,7 +117,7 @@ func generateMagicDNSRootDomains(ipPrefix netaddr.IPPrefix, baseDomain string) (
 		}
 		fqdns = append(fqdns, fqdn)
 	}
-	return fqdns, nil
+	return
 }
 
 func getMapResponseDNSConfig(dnsConfigOrig *tailcfg.DNSConfig, baseDomain string, m Machine, peers Machines) (*tailcfg.DNSConfig, error) {

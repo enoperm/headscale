@@ -27,11 +27,11 @@ func (h *Headscale) RegisterMachine(key string, namespace string) (*Machine, err
 		return nil, errors.New("Machine already registered")
 	}
 
-	ip, err := h.getAvailableIP()
+	ips, err := h.getAvailableIPs()
 	if err != nil {
 		return nil, err
 	}
-	m.IPAddress = ip.String()
+	m.IPAddresses = ips.ToStringSlice()
 	m.NamespaceID = ns.ID
 	m.Registered = true
 	m.RegisterMethod = "cli"

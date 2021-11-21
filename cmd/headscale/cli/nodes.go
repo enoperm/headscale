@@ -280,7 +280,7 @@ var unshareMachineCmd = &cobra.Command{
 }
 
 func nodesToPtables(currentNamespace headscale.Namespace, machines []headscale.Machine) (pterm.TableData, error) {
-	d := pterm.TableData{{"ID", "Name", "NodeKey", "Namespace", "IP address", "Ephemeral", "Last seen", "Online"}}
+	d := pterm.TableData{{"ID", "Name", "NodeKey", "Namespace", "IP addresses", "Ephemeral", "Last seen", "Online"}}
 
 	for _, machine := range machines {
 		var ephemeral bool
@@ -312,7 +312,7 @@ func nodesToPtables(currentNamespace headscale.Namespace, machines []headscale.M
 		} else {
 			namespace = pterm.LightYellow(machine.Namespace.Name)
 		}
-		d = append(d, []string{strconv.FormatUint(machine.ID, 10), machine.Name, nodeKey.ShortString(), namespace, machine.IPAddress, strconv.FormatBool(ephemeral), lastSeenTime, online})
+		d = append(d, []string{strconv.FormatUint(machine.ID, 10), machine.Name, nodeKey.ShortString(), namespace, strings.Join(machine.IPAddresses, ", "), strconv.FormatBool(ephemeral), lastSeenTime, online})
 	}
 	return d, nil
 }

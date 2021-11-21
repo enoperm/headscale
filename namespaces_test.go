@@ -112,7 +112,7 @@ func (s *Suite) TestGetMapResponseUserProfiles(c *check.C) {
 		Namespace:      *n1,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddress:      "100.64.0.1",
+		IPAddresses:    []string{"100.64.0.1"},
 		AuthKeyID:      uint(pak1n1.ID),
 	}
 	h.db.Save(m1)
@@ -130,7 +130,7 @@ func (s *Suite) TestGetMapResponseUserProfiles(c *check.C) {
 		Namespace:      *n2,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddress:      "100.64.0.2",
+		IPAddresses:    []string{"100.64.0.2"},
 		AuthKeyID:      uint(pak2n2.ID),
 	}
 	h.db.Save(m2)
@@ -148,7 +148,7 @@ func (s *Suite) TestGetMapResponseUserProfiles(c *check.C) {
 		Namespace:      *n3,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddress:      "100.64.0.3",
+		IPAddresses:    []string{"100.64.0.3"},
 		AuthKeyID:      uint(pak3n3.ID),
 	}
 	h.db.Save(m3)
@@ -166,7 +166,7 @@ func (s *Suite) TestGetMapResponseUserProfiles(c *check.C) {
 		Namespace:      *n1,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddress:      "100.64.0.4",
+		IPAddresses:    []string{"100.64.0.4"},
 		AuthKeyID:      uint(pak4n1.ID),
 	}
 	h.db.Save(m4)

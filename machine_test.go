@@ -157,3 +157,19 @@ func (s *Suite) TestGetDirectPeers(c *check.C) {
 	c.Assert(peers[5].Name, check.Equals, "testmachine7")
 	c.Assert(peers[8].Name, check.Equals, "testmachine10")
 }
+
+func (s *Suite) TestSerdeAddressStrignSlice(c *check.C) {
+	input := AddressStringSlice([]string{"192.0.2.0/24", "2001:db8::/32"})
+	serialized, err := input.Value()
+	c.Assert(err, check.IsNil)
+	c.Assert(serialized.(string), check.Equals, "192.0.2.0/24,2001:db8::/32")
+
+	var deserialized AddressStringSlice
+	deserialized.Scan(serialized)
+
+	c.Assert(len(deserialized), check.Equals, len(input))
+	for i := range deserialized {
+		c.Assert(deserialized[i], check.Equals, input[i])
+	}
+}
+

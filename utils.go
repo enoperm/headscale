@@ -74,9 +74,23 @@ func encodeMsg(b []byte, pubKey *wgkey.Key, privKey *wgkey.Private) ([]byte, err
 	return msg, nil
 }
 
-func (h *Headscale) getAvailableIP() (*netaddr.IP, error) {
-	ipPrefix := h.cfg.IPPrefix
+func (h *Headscale) getAvailableIPs() (ips MachineAddresses, err error) {
+	ipPrefixes := h.cfg.IPPrefixes
+	for _, ipPrefix := range ipPrefixes {
+		var ip *netaddr.IP
+		ip, err = h.getAvailableIP(ipPrefix)
+		if err != nil {
+			return
+		}
+		ips = append(ips, *ip)
+	}
+	return
+}
 
+// TODO: Is this concurrency safe?
+// What would happen if multiple hosts were to register at the same time?
+// Would we attempt to assign the same addresses to multiple nodes?
+func (h *Headscale) getAvailableIP(ipPrefix netaddr.IPPrefix) (*netaddr.IP, error) {
 	usedIps, err := h.getUsedIPs()
 	if err != nil {
 		return nil, err
@@ -111,18 +125,31 @@ func (h *Headscale) getAvailableIP() (*netaddr.IP, error) {
 }
 
 func (h *Headscale) getUsedIPs() ([]netaddr.IP, error) {
-	var addresses []string
-	h.db.Model(&Machine{}).Pluck("ip_address", &addresses)
+	// FIXME: This really deserves a better data model,
+	// but this was quick to get running and it should be enough
+	// to begin experimenting with a dual stack tailnet.
+	var addressesSlices []string
+	h.db.Model(&Machine{}).Pluck("ip_addresses", &addressesSlices)
 
-	ips := make([]netaddr.IP, len(addresses))
-	for index, addr := range addresses {
+	addresses := make([]string, len(h.cfg.IPPrefixes)*len(addressesSlices))
+	for _, slice := range addressesSlices {
+		var a AddressStringSlice
+		err := a.Scan(slice)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read ip from database: %w", err)
+		}
+		addresses = append(addresses, a...)
+	}
+
+	ips := make([]netaddr.IP, 0, len(addresses))
+	for _, addr := range addresses {
 		if addr != "" {
 			ip, err := netaddr.ParseIP(addr)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse ip from database, %w", err)
 			}
 
-			ips[index] = ip
+			ips = append(ips, ip)
 		}
 	}
 

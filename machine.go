@@ -1,6 +1,7 @@
 package headscale
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -23,7 +24,7 @@ type Machine struct {
 	MachineKey  string `gorm:"type:varchar(64);unique_index"`
 	NodeKey     string
 	DiscoKey    string
-	IPAddress   string
+	IPAddresses AddressStringSlice
 	Name        string
 	NamespaceID uint
 	Namespace   Namespace `gorm:"foreignKey:NamespaceID"`
@@ -50,6 +51,34 @@ type (
 	Machines  []Machine
 	MachinesP []*Machine
 )
+
+type MachineAddresses []netaddr.IP
+type AddressStringSlice []string
+
+func (ma MachineAddresses) ToStringSlice() []string {
+	strSlice := make([]string, 0, len(ma))
+	for _, prefix := range ma {
+		strSlice = append(strSlice, prefix.String())
+	}
+	return strSlice
+}
+
+func (a *AddressStringSlice) Scan(value interface{}) error {
+	switch v := value.(type) {
+	case string:
+		*a = strings.Split(v, ",")
+		log.Printf("input: %s, output: %#v", v, a)
+		return nil
+
+	default:
+		return fmt.Errorf("unexpected data type %T", v)
+	}
+}
+
+// Value return json value, implement driver.Valuer interface
+func (a *AddressStringSlice) Value() (driver.Value, error) {
+	return strings.Join(*a, ","), nil
+}
 
 // For the time being this method is rather naive
 func (m Machine) isAlreadyRegistered() bool {
@@ -365,19 +394,21 @@ func (m Machine) toNode(baseDomain string, dnsConfig *tailcfg.DNSConfig, include
 	}
 
 	addrs := []netaddr.IPPrefix{}
-	nodeAddr, err := netaddr.ParseIP(m.IPAddress)
-	if err != nil {
-		log.Trace().
-			Str("func", "toNode").
-			Str("ip", m.IPAddress).
-			Msgf("Failed to parse machine IP: %s", m.IPAddress)
-		return nil, err
+	for _, machineAddress := range m.IPAddresses {
+		nodeAddr, err := netaddr.ParseIP(machineAddress)
+		if err != nil {
+			log.Trace().
+				Caller().
+				Str("ip", machineAddress).
+				Msgf("Failed to parse machine IP: %s", machineAddress)
+			return nil, err
+		}
+		ip := netaddr.IPPrefixFrom(nodeAddr, nodeAddr.BitLen())
+		addrs = append(addrs, ip)
 	}
-	ip := netaddr.IPPrefixFrom(nodeAddr, nodeAddr.BitLen())
-	addrs = append(addrs, ip)
 
 	allowedIPs := []netaddr.IPPrefix{}
-	allowedIPs = append(allowedIPs, ip) // we append the node own IP, as it is required by the clients
+	allowedIPs = append(allowedIPs, addrs...) // we append the node own IP, as it is required by the clients
 
 	if includeRoutes {
 		routesStr := []string{}

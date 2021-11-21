@@ -6,17 +6,18 @@ import (
 )
 
 func (s *Suite) TestGetAvailableIp(c *check.C) {
-	ip, err := h.getAvailableIP()
+	ips, err := h.getAvailableIPs()
 
 	c.Assert(err, check.IsNil)
 
 	expected := netaddr.MustParseIP("10.27.0.1")
 
-	c.Assert(ip.String(), check.Equals, expected.String())
+	c.Assert(len(ips), check.Equals, 1)
+	c.Assert(ips[0].String(), check.Equals, expected.String())
 }
 
 func (s *Suite) TestGetUsedIps(c *check.C) {
-	ip, err := h.getAvailableIP()
+	ips, err := h.getAvailableIPs()
 	c.Assert(err, check.IsNil)
 
 	n, err := h.CreateNamespace("test_ip")
@@ -38,22 +39,24 @@ func (s *Suite) TestGetUsedIps(c *check.C) {
 		Registered:     true,
 		RegisterMethod: "authKey",
 		AuthKeyID:      uint(pak.ID),
-		IPAddress:      ip.String(),
+		IPAddresses:    ips.ToStringSlice(),
 	}
 	h.db.Save(&m)
 
-	ips, err := h.getUsedIPs()
+	usedIps, err := h.getUsedIPs()
 
 	c.Assert(err, check.IsNil)
 
 	expected := netaddr.MustParseIP("10.27.0.1")
 
-	c.Assert(ips[0], check.Equals, expected)
+	c.Assert(len(usedIps), check.Equals, 1)
+	c.Assert(usedIps[0], check.Equals, expected)
 
 	m1, err := h.GetMachineByID(0)
 	c.Assert(err, check.IsNil)
 
-	c.Assert(m1.IPAddress, check.Equals, expected.String())
+	c.Assert(len(m1.IPAddresses), check.Equals, 1)
+	c.Assert(m1.IPAddresses[0], check.Equals, expected.String())
 }
 
 func (s *Suite) TestGetMultiIp(c *check.C) {
@@ -61,7 +64,7 @@ func (s *Suite) TestGetMultiIp(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	for i := 1; i <= 350; i++ {
-		ip, err := h.getAvailableIP()
+		ips, err := h.getAvailableIPs()
 		c.Assert(err, check.IsNil)
 
 		pak, err := h.CreatePreAuthKey(n.Name, false, false, nil)
@@ -80,51 +83,64 @@ func (s *Suite) TestGetMultiIp(c *check.C) {
 			Registered:     true,
 			RegisterMethod: "authKey",
 			AuthKeyID:      uint(pak.ID),
-			IPAddress:      ip.String(),
+			IPAddresses:    ips.ToStringSlice(),
 		}
 		h.db.Save(&m)
 	}
 
-	ips, err := h.getUsedIPs()
+	usedIps, err := h.getUsedIPs()
 
 	c.Assert(err, check.IsNil)
 
-	c.Assert(len(ips), check.Equals, 350)
+	c.Assert(len(usedIps), check.Equals, 350)
 
-	c.Assert(ips[0], check.Equals, netaddr.MustParseIP("10.27.0.1"))
-	c.Assert(ips[9], check.Equals, netaddr.MustParseIP("10.27.0.10"))
-	c.Assert(ips[300], check.Equals, netaddr.MustParseIP("10.27.1.45"))
+	c.Assert(usedIps[0], check.Equals, netaddr.MustParseIP("10.27.0.1"))
+	c.Assert(usedIps[9], check.Equals, netaddr.MustParseIP("10.27.0.10"))
+	c.Assert(usedIps[300], check.Equals, netaddr.MustParseIP("10.27.1.45"))
 
 	// Check that we can read back the IPs
 	m1, err := h.GetMachineByID(1)
 	c.Assert(err, check.IsNil)
-	c.Assert(m1.IPAddress, check.Equals, netaddr.MustParseIP("10.27.0.1").String())
+	c.Assert(len(m1.IPAddresses), check.Equals, 1)
+	c.Assert(
+		m1.IPAddresses[0],
+		check.Equals,
+		netaddr.MustParseIP("10.27.0.1").String(),
+	)
 
 	m50, err := h.GetMachineByID(50)
 	c.Assert(err, check.IsNil)
-	c.Assert(m50.IPAddress, check.Equals, netaddr.MustParseIP("10.27.0.50").String())
+	c.Assert(len(m50.IPAddresses), check.Equals, 1)
+	c.Assert(
+		m50.IPAddresses[0],
+		check.Equals,
+		netaddr.MustParseIP("10.27.0.50").String(),
+	)
 
 	expectedNextIP := netaddr.MustParseIP("10.27.1.95")
-	nextIP, err := h.getAvailableIP()
+	nextIP, err := h.getAvailableIPs()
 	c.Assert(err, check.IsNil)
 
-	c.Assert(nextIP.String(), check.Equals, expectedNextIP.String())
+	c.Assert(len(nextIP), check.Equals, 1)
+	c.Assert(nextIP[0].String(), check.Equals, expectedNextIP.String())
 
 	// If we call get Available again, we should receive
 	// the same IP, as it has not been reserved.
-	nextIP2, err := h.getAvailableIP()
+	nextIP2, err := h.getAvailableIPs()
 	c.Assert(err, check.IsNil)
 
-	c.Assert(nextIP2.String(), check.Equals, expectedNextIP.String())
+	c.Assert(len(nextIP2), check.Equals, 1)
+	c.Assert(nextIP2[0].String(), check.Equals, expectedNextIP.String())
 }
 
 func (s *Suite) TestGetAvailableIpMachineWithoutIP(c *check.C) {
-	ip, err := h.getAvailableIP()
+	ips, err := h.getAvailableIPs()
 	c.Assert(err, check.IsNil)
 
 	expected := netaddr.MustParseIP("10.27.0.1")
 
-	c.Assert(ip.String(), check.Equals, expected.String())
+	c.Assert(len(ips), check.Equals, 1)
+	c.Assert(ips[0].String(), check.Equals, expected.String())
 
 	n, err := h.CreateNamespace("test_ip")
 	c.Assert(err, check.IsNil)
@@ -148,8 +164,9 @@ func (s *Suite) TestGetAvailableIpMachineWithoutIP(c *check.C) {
 	}
 	h.db.Save(&m)
 
-	ip2, err := h.getAvailableIP()
+	ips2, err := h.getAvailableIPs()
 	c.Assert(err, check.IsNil)
 
-	c.Assert(ip2.String(), check.Equals, expected.String())
+	c.Assert(len(ips2), check.Equals, 1)
+	c.Assert(ips2[0].String(), check.Equals, expected.String())
 }

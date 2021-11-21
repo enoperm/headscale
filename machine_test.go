@@ -165,11 +165,11 @@ func (s *Suite) TestSerdeAddressStrignSlice(c *check.C) {
 	c.Assert(serialized.(string), check.Equals, "192.0.2.0/24,2001:db8::/32")
 
 	var deserialized AddressStringSlice
-	deserialized.Scan(serialized)
+	err = deserialized.Scan(serialized)
+	c.Assert(err, check.IsNil)
 
 	c.Assert(len(deserialized), check.Equals, len(input))
 	for i := range deserialized {
 		c.Assert(deserialized[i], check.Equals, input[i])
 	}
 }
-

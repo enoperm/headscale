@@ -273,7 +273,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		result, err := ExecuteCommand(
 			&s.headscale,
 			[]string{"headscale", "namespaces", "create", namespace},
-			[]string{},
+			[]string{"GOMAXPROCS=32"},
 		)
 		fmt.Println("headscale create namespace result: ", result)
 		assert.Nil(s.T(), err)
@@ -325,7 +325,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			result, err := ExecuteCommand(
 				&tailscale,
 				command,
-				[]string{},
+				[]string{"GOMAXPROCS=32"},
 			)
 			fmt.Println("tailscale result: ", result)
 			assert.Nil(s.T(), err)
@@ -354,7 +354,7 @@ func (s *IntegrationTestSuite) TestListNodes() {
 		result, err := ExecuteCommand(
 			&s.headscale,
 			[]string{"headscale", "--namespace", namespace, "nodes", "list"},
-			[]string{},
+			[]string{"GOMAXPROCS=32"},
 		)
 		assert.Nil(s.T(), err)
 
@@ -394,7 +394,7 @@ func (s *IntegrationTestSuite) TestGetIpAddresses() {
 }
 
 // TODO(kradalby): fix this test
-// We need some way to impot ipnstate.Status from multiple go packages.
+// We need some way to import ipnstate.Status from multiple go packages.
 // Currently it will only work with 1.18.x since that is the last
 // version we have in go.mod
 // func (s *IntegrationTestSuite) TestStatus() {
@@ -478,7 +478,7 @@ func (s *IntegrationTestSuite) TestPingAllPeers() {
 						result, err := ExecuteCommand(
 							&tailscale,
 							command,
-							[]string{},
+							[]string{"GOMAXPROCS=32"},
 						)
 						assert.Nil(t, err)
 						fmt.Printf("Result for %s: %s\n", hostname, result)
@@ -533,7 +533,7 @@ func (s *IntegrationTestSuite) TestSharedNodes() {
 	result, err = ExecuteCommand(
 		&s.headscale,
 		[]string{"headscale", "nodes", "list", "--namespace", "main"},
-		[]string{},
+		[]string{"GOMAXPROCS=32"},
 	)
 	assert.Nil(s.T(), err)
 	fmt.Println("Nodelist after sharing", result)
@@ -584,7 +584,7 @@ func (s *IntegrationTestSuite) TestSharedNodes() {
 					result, err := ExecuteCommand(
 						&tailscale,
 						command,
-						[]string{},
+						[]string{"GOMAXPROCS=32"},
 					)
 					assert.Nil(t, err)
 					fmt.Printf("Result for %s: %s\n", hostname, result)
@@ -607,7 +607,7 @@ func (s *IntegrationTestSuite) TestTailDrop() {
 			_, err := ExecuteCommand(
 				&tailscale,
 				command,
-				[]string{},
+				[]string{"GOMAXPROCS=32"},
 			)
 			assert.Nil(s.T(), err)
 			for peername, ip := range ips {
@@ -653,7 +653,7 @@ func (s *IntegrationTestSuite) TestTailDrop() {
 							_, err = ExecuteCommand(
 								&tailscale,
 								command,
-								[]string{"ALL_PROXY=socks5://localhost:1055"},
+								[]string{"ALL_PROXY=socks5://localhost:1055", "GOMAXPROCS=32"},
 							)
 							if err == nil {
 								break
@@ -680,7 +680,7 @@ func (s *IntegrationTestSuite) TestTailDrop() {
 			_, err := ExecuteCommand(
 				&tailscale,
 				command,
-				[]string{},
+				[]string{"GOMAXPROCS=32"},
 			)
 			assert.Nil(s.T(), err)
 			for peername, ip := range ips {
@@ -700,7 +700,7 @@ func (s *IntegrationTestSuite) TestTailDrop() {
 						result, err := ExecuteCommand(
 							&tailscale,
 							command,
-							[]string{},
+							[]string{"GOMAXPROCS=32"},
 						)
 						assert.Nil(t, err)
 						fmt.Printf("Result for %s: %s\n", peername, result)
@@ -742,7 +742,7 @@ func (s *IntegrationTestSuite) TestMagicDNS() {
 						result, err := ExecuteCommand(
 							&tailscale,
 							command,
-							[]string{},
+							[]string{"GOMAXPROCS=32"},
 						)
 						assert.Nil(t, err)
 						fmt.Printf("Result for %s: %s\n", hostname, result)
@@ -762,7 +762,7 @@ func getIPs(tailscales map[string]dockertest.Resource) (map[string]netaddr.IP, e
 		result, err := ExecuteCommand(
 			&tailscale,
 			command,
-			[]string{},
+			[]string{"GOMAXPROCS=32"},
 		)
 		if err != nil {
 			return nil, err
@@ -793,7 +793,7 @@ func getAPIURLs(
 		result, err := ExecuteCommand(
 			&tailscale,
 			command,
-			[]string{},
+			[]string{"GOMAXPROCS=32"},
 		)
 		if err != nil {
 			return nil, err

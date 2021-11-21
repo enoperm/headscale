@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"gopkg.in/check.v1"
+	"inet.af/netaddr"
 )
 
 func (s *Suite) TestGetMachine(c *check.C) {
@@ -159,12 +160,15 @@ func (s *Suite) TestGetDirectPeers(c *check.C) {
 }
 
 func (s *Suite) TestSerdeAddressStrignSlice(c *check.C) {
-	input := AddressStringSlice([]string{"192.0.2.0/24", "2001:db8::/32"})
+	input := MachineAddresses([]netaddr.IP{
+		netaddr.MustParseIP("192.0.2.1"),
+		netaddr.MustParseIP("2001:db8::1"),
+	})
 	serialized, err := input.Value()
 	c.Assert(err, check.IsNil)
-	c.Assert(serialized.(string), check.Equals, "192.0.2.0/24,2001:db8::/32")
+	c.Assert(serialized.(string), check.Equals, "192.0.2.1,2001:db8::1")
 
-	var deserialized AddressStringSlice
+	var deserialized MachineAddresses
 	err = deserialized.Scan(serialized)
 	c.Assert(err, check.IsNil)
 

@@ -2,6 +2,7 @@ package headscale
 
 import (
 	"gopkg.in/check.v1"
+	"inet.af/netaddr"
 )
 
 func (s *Suite) TestRegisterMachine(c *check.C) {
@@ -15,9 +16,11 @@ func (s *Suite) TestRegisterMachine(c *check.C) {
 		DiscoKey:    "faa",
 		Name:        "testmachine",
 		NamespaceID: n.ID,
-		IPAddresses: []string{"10.0.0.1"},
+		IPAddresses: []netaddr.IP{netaddr.MustParseIP("10.0.0.1")},
 	}
-	h.db.Save(&m)
+	if err := h.db.Save(&m).Error; true {
+		c.Assert(err, check.IsNil)
+	}
 
 	_, err = h.GetMachine("test", "testmachine")
 	c.Assert(err, check.IsNil)

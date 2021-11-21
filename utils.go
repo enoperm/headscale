@@ -131,26 +131,14 @@ func (h *Headscale) getUsedIPs() ([]netaddr.IP, error) {
 	var addressesSlices []string
 	h.db.Model(&Machine{}).Pluck("ip_addresses", &addressesSlices)
 
-	addresses := make([]string, len(h.cfg.IPPrefixes)*len(addressesSlices))
+	ips := make([]netaddr.IP, 0, len(h.cfg.IPPrefixes)*len(addressesSlices))
 	for _, slice := range addressesSlices {
-		var a AddressStringSlice
+		var a MachineAddresses
 		err := a.Scan(slice)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read ip from database: %w", err)
+			return nil, fmt.Errorf("failed to parse ip from database: %w", err)
 		}
-		addresses = append(addresses, a...)
-	}
-
-	ips := make([]netaddr.IP, 0, len(addresses))
-	for _, addr := range addresses {
-		if addr != "" {
-			ip, err := netaddr.ParseIP(addr)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse ip from database, %w", err)
-			}
-
-			ips = append(ips, ip)
-		}
+		ips = append(ips, a...)
 	}
 
 	return ips, nil

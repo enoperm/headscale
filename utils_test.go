@@ -39,7 +39,7 @@ func (s *Suite) TestGetUsedIps(c *check.C) {
 		Registered:     true,
 		RegisterMethod: "authKey",
 		AuthKeyID:      uint(pak.ID),
-		IPAddresses:    ips.ToStringSlice(),
+		IPAddresses:    ips,
 	}
 	h.db.Save(&m)
 
@@ -56,7 +56,7 @@ func (s *Suite) TestGetUsedIps(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	c.Assert(len(m1.IPAddresses), check.Equals, 1)
-	c.Assert(m1.IPAddresses[0], check.Equals, expected.String())
+	c.Assert(m1.IPAddresses[0], check.Equals, expected)
 }
 
 func (s *Suite) TestGetMultiIp(c *check.C) {
@@ -83,7 +83,7 @@ func (s *Suite) TestGetMultiIp(c *check.C) {
 			Registered:     true,
 			RegisterMethod: "authKey",
 			AuthKeyID:      uint(pak.ID),
-			IPAddresses:    ips.ToStringSlice(),
+			IPAddresses:    ips,
 		}
 		h.db.Save(&m)
 	}
@@ -105,7 +105,7 @@ func (s *Suite) TestGetMultiIp(c *check.C) {
 	c.Assert(
 		m1.IPAddresses[0],
 		check.Equals,
-		netaddr.MustParseIP("10.27.0.1").String(),
+		netaddr.MustParseIP("10.27.0.1"),
 	)
 
 	m50, err := h.GetMachineByID(50)
@@ -114,7 +114,7 @@ func (s *Suite) TestGetMultiIp(c *check.C) {
 	c.Assert(
 		m50.IPAddresses[0],
 		check.Equals,
-		netaddr.MustParseIP("10.27.0.50").String(),
+		netaddr.MustParseIP("10.27.0.50"),
 	)
 
 	expectedNextIP := netaddr.MustParseIP("10.27.1.95")

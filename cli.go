@@ -31,10 +31,11 @@ func (h *Headscale) RegisterMachine(key string, namespace string) (*Machine, err
 	if err != nil {
 		return nil, err
 	}
-	m.IPAddresses = ips.ToStringSlice()
+	m.IPAddresses = ips
 	m.NamespaceID = ns.ID
 	m.Registered = true
 	m.RegisterMethod = "cli"
 	h.db.Save(&m)
+
 	return &m, nil
 }

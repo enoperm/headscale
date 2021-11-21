@@ -24,7 +24,7 @@ type Machine struct {
 	MachineKey  string `gorm:"type:varchar(64);unique_index"`
 	NodeKey     string
 	DiscoKey    string
-	IPAddresses AddressStringSlice
+	IPAddresses MachineAddresses
 	Name        string
 	NamespaceID uint
 	Namespace   Namespace `gorm:"foreignKey:NamespaceID"`
@@ -53,21 +53,30 @@ type (
 )
 
 type MachineAddresses []netaddr.IP
-type AddressStringSlice []string
 
 func (ma MachineAddresses) ToStringSlice() []string {
 	strSlice := make([]string, 0, len(ma))
-	for _, prefix := range ma {
-		strSlice = append(strSlice, prefix.String())
+	for _, addr := range ma {
+		strSlice = append(strSlice, addr.String())
 	}
 	return strSlice
 }
 
-func (a *AddressStringSlice) Scan(value interface{}) error {
+func (a *MachineAddresses) Scan(value interface{}) error {
 	switch v := value.(type) {
 	case string:
-		*a = strings.Split(v, ",")
-		log.Printf("input: %s, output: %#v", v, a)
+		addresses := strings.Split(v, ",")
+		*a = (*a)[:0]
+		for _, addr := range addresses {
+			if len(addr) < 1 {
+				continue
+			}
+			parsed, err := netaddr.ParseIP(addr)
+			if err != nil {
+				return err
+			}
+			*a = append(*a, parsed)
+		}
 		return nil
 
 	default:
@@ -76,8 +85,9 @@ func (a *AddressStringSlice) Scan(value interface{}) error {
 }
 
 // Value return json value, implement driver.Valuer interface
-func (a *AddressStringSlice) Value() (driver.Value, error) {
-	return strings.Join(*a, ","), nil
+func (ma MachineAddresses) Value() (driver.Value, error) {
+	addresses := strings.Join(ma.ToStringSlice(), ",")
+	return addresses, nil
 }
 
 // For the time being this method is rather naive
@@ -395,15 +405,7 @@ func (m Machine) toNode(baseDomain string, dnsConfig *tailcfg.DNSConfig, include
 
 	addrs := []netaddr.IPPrefix{}
 	for _, machineAddress := range m.IPAddresses {
-		nodeAddr, err := netaddr.ParseIP(machineAddress)
-		if err != nil {
-			log.Trace().
-				Caller().
-				Str("ip", machineAddress).
-				Msgf("Failed to parse machine IP: %s", machineAddress)
-			return nil, err
-		}
-		ip := netaddr.IPPrefixFrom(nodeAddr, nodeAddr.BitLen())
+		ip := netaddr.IPPrefixFrom(machineAddress, machineAddress.BitLen())
 		addrs = append(addrs, ip)
 	}
 

@@ -312,7 +312,7 @@ func nodesToPtables(currentNamespace headscale.Namespace, machines []headscale.M
 		} else {
 			namespace = pterm.LightYellow(machine.Namespace.Name)
 		}
-		d = append(d, []string{strconv.FormatUint(machine.ID, 10), machine.Name, nodeKey.ShortString(), namespace, strings.Join(machine.IPAddresses, ", "), strconv.FormatBool(ephemeral), lastSeenTime, online})
+		d = append(d, []string{strconv.FormatUint(machine.ID, 10), machine.Name, nodeKey.ShortString(), namespace, strings.Join(machine.IPAddresses.ToStringSlice(), ", "), strconv.FormatBool(ephemeral), lastSeenTime, online})
 	}
 	return d, nil
 }

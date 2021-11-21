@@ -2,6 +2,7 @@ package headscale
 
 import (
 	"gopkg.in/check.v1"
+	"inet.af/netaddr"
 )
 
 func CreateNodeNamespace(c *check.C, namespace, node, key, IP string) (*Namespace, *Machine) {
@@ -23,7 +24,7 @@ func CreateNodeNamespace(c *check.C, namespace, node, key, IP string) (*Namespac
 		NamespaceID:    n1.ID,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddresses:    []string{"100.64.0.1"},
+		IPAddresses:    []netaddr.IP{netaddr.MustParseIP("100.64.0.1")},
 		AuthKeyID:      uint(pak1.ID),
 	}
 	h.db.Save(m1)
@@ -136,7 +137,7 @@ func (s *Suite) TestComplexSharingAcrossNamespaces(c *check.C) {
 		NamespaceID:    n1.ID,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddresses:    []string{"100.64.0.4"},
+		IPAddresses:    []netaddr.IP{netaddr.MustParseIP("100.64.0.4")},
 		AuthKeyID:      uint(pak4.ID),
 	}
 	h.db.Save(m4)
@@ -190,7 +191,7 @@ func (s *Suite) TestDeleteSharedMachine(c *check.C) {
 		NamespaceID:    n1.ID,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddresses:    []string{"100.64.0.4"},
+		IPAddresses:    []netaddr.IP{netaddr.MustParseIP("100.64.0.4")},
 		AuthKeyID:      uint(pak4n1.ID),
 	}
 	h.db.Save(m4)

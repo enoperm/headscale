@@ -387,11 +387,6 @@ func (h *Headscale) handleAuthKey(
 		return
 	}
 
-	addressStrings := make([]string, 0, len(ips))
-	for _, ip := range ips {
-		addressStrings = append(addressStrings, ip.String())
-	}
-
 	log.Info().
 		Str("func", "handleAuthKey").
 		Str("machine", m.Name).
@@ -399,7 +394,7 @@ func (h *Headscale) handleAuthKey(
 		Msgf("Assigning %s to %s", ips, m.Name)
 
 	m.AuthKeyID = uint(pak.ID)
-	m.IPAddresses = addressStrings
+	m.IPAddresses = ips
 	m.NamespaceID = pak.NamespaceID
 	m.NodeKey = wgkey.Key(req.NodeKey).HexString() // we update it just in case
 	m.Registered = true
@@ -427,6 +422,6 @@ func (h *Headscale) handleAuthKey(
 	log.Info().
 		Str("func", "handleAuthKey").
 		Str("machine", m.Name).
-		Str("ips", strings.Join(addressStrings, ", ")).
+		Str("ips", strings.Join(ips.ToStringSlice(), ", ")).
 		Msg("Successfully authenticated via AuthKey")
 }

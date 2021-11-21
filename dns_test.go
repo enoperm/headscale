@@ -101,7 +101,7 @@ func (s *Suite) TestDNSConfigMapResponseWithMagicDNS(c *check.C) {
 		Namespace:      *n1,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddresses:    []string{"100.64.0.1"},
+		IPAddresses:    []netaddr.IP{netaddr.MustParseIP("100.64.0.1")},
 		AuthKeyID:      uint(pak1n1.ID),
 	}
 	h.db.Save(m1)
@@ -119,7 +119,7 @@ func (s *Suite) TestDNSConfigMapResponseWithMagicDNS(c *check.C) {
 		Namespace:      *n2,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddresses:    []string{"100.64.0.2"},
+		IPAddresses:    []netaddr.IP{netaddr.MustParseIP("100.64.0.2")},
 		AuthKeyID:      uint(pak2n2.ID),
 	}
 	h.db.Save(m2)
@@ -137,7 +137,7 @@ func (s *Suite) TestDNSConfigMapResponseWithMagicDNS(c *check.C) {
 		Namespace:      *n3,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddresses:    []string{"100.64.0.3"},
+		IPAddresses:    []netaddr.IP{netaddr.MustParseIP("100.64.0.3")},
 		AuthKeyID:      uint(pak3n3.ID),
 	}
 	h.db.Save(m3)
@@ -155,7 +155,7 @@ func (s *Suite) TestDNSConfigMapResponseWithMagicDNS(c *check.C) {
 		Namespace:      *n1,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddresses:    []string{"100.64.0.4"},
+		IPAddresses:    []netaddr.IP{netaddr.MustParseIP("100.64.0.4")},
 		AuthKeyID:      uint(pak4n1.ID),
 	}
 	h.db.Save(m4)
@@ -226,7 +226,7 @@ func (s *Suite) TestDNSConfigMapResponseWithoutMagicDNS(c *check.C) {
 		Namespace:      *n1,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddresses:    []string{"100.64.0.1"},
+		IPAddresses:    []netaddr.IP{netaddr.MustParseIP("100.64.0.1")},
 		AuthKeyID:      uint(pak1n1.ID),
 	}
 	h.db.Save(m1)
@@ -244,7 +244,7 @@ func (s *Suite) TestDNSConfigMapResponseWithoutMagicDNS(c *check.C) {
 		Namespace:      *n2,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddresses:    []string{"100.64.0.2"},
+		IPAddresses:    []netaddr.IP{netaddr.MustParseIP("100.64.0.2")},
 		AuthKeyID:      uint(pak2n2.ID),
 	}
 	h.db.Save(m2)
@@ -262,7 +262,7 @@ func (s *Suite) TestDNSConfigMapResponseWithoutMagicDNS(c *check.C) {
 		Namespace:      *n3,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddresses:    []string{"100.64.0.3"},
+		IPAddresses:    []netaddr.IP{netaddr.MustParseIP("100.64.0.3")},
 		AuthKeyID:      uint(pak3n3.ID),
 	}
 	h.db.Save(m3)
@@ -280,7 +280,7 @@ func (s *Suite) TestDNSConfigMapResponseWithoutMagicDNS(c *check.C) {
 		Namespace:      *n1,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddresses:    []string{"100.64.0.4"},
+		IPAddresses:    []netaddr.IP{netaddr.MustParseIP("100.64.0.4")},
 		AuthKeyID:      uint(pak4n1.ID),
 	}
 	h.db.Save(m4)

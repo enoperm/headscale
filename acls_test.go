@@ -98,7 +98,7 @@ func (s *Suite) TestPortNamespace(c *check.C) {
 		NamespaceID:    n.ID,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddresses:    ips.ToStringSlice(),
+		IPAddresses:    ips,
 		AuthKeyID:      uint(pak.ID),
 	}
 	h.db.Save(&m)
@@ -139,7 +139,7 @@ func (s *Suite) TestPortGroup(c *check.C) {
 		NamespaceID:    n.ID,
 		Registered:     true,
 		RegisterMethod: "authKey",
-		IPAddresses:    ips.ToStringSlice(),
+		IPAddresses:    ips,
 		AuthKeyID:      uint(pak.ID),
 	}
 	h.db.Save(&m)

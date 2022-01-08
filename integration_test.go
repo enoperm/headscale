@@ -174,6 +174,7 @@ func (s *IntegrationTestSuite) tailscaleContainer(
 		tailscaleBuildOptions,
 		tailscaleOptions,
 		DockerRestartPolicy,
+		DockerAllowLocalIPv6,
 	)
 	if err != nil {
 		log.Fatalf("Could not start resource: %s", err)
@@ -402,44 +403,44 @@ func (s *IntegrationTestSuite) TestGetIpAddresses() {
 // Currently it will only work with 1.18.x since that is the last
 // version we have in go.mod
 // func (s *IntegrationTestSuite) TestStatus() {
-// 	for _, scales := range s.namespaces {
-// 		ips, err := getIPs(scales.tailscales)
-// 		assert.Nil(s.T(), err)
+//	for _, scales := range s.namespaces {
+//		ips, err := getIPs(scales.tailscales)
+//		assert.Nil(s.T(), err)
 //
-// 		for hostname, tailscale := range scales.tailscales {
-// 			s.T().Run(hostname, func(t *testing.T) {
-// 				command := []string{"tailscale", "status", "--json"}
+//		for hostname, tailscale := range scales.tailscales {
+//			s.T().Run(hostname, func(t *testing.T) {
+//				command := []string{"tailscale", "status", "--json"}
 //
-// 				fmt.Printf("Getting status for %s\n", hostname)
-// 				result, err := ExecuteCommand(
-// 					&tailscale,
-// 					command,
-// 					[]string{},
-// 				)
-// 				assert.Nil(t, err)
+//				fmt.Printf("Getting status for %s\n", hostname)
+//				result, err := ExecuteCommand(
+//					&tailscale,
+//					command,
+//					[]string{},
+//				)
+//				assert.Nil(t, err)
 //
-// 				var status ipnstate.Status
-// 				err = json.Unmarshal([]byte(result), &status)
-// 				assert.Nil(s.T(), err)
+//				var status ipnstate.Status
+//				err = json.Unmarshal([]byte(result), &status)
+//				assert.Nil(s.T(), err)
 //
-// 				// TODO(kradalby): Replace this check with peer length of SAME namespace
-// 				// Check if we have as many nodes in status
-// 				// as we have IPs/tailscales
-// 				// lines := strings.Split(result, "\n")
-// 				// assert.Equal(t, len(ips), len(lines)-1)
-// 				// assert.Equal(t, len(scales.tailscales), len(lines)-1)
+//				// TODO(kradalby): Replace this check with peer length of SAME namespace
+//				// Check if we have as many nodes in status
+//				// as we have IPs/tailscales
+//				// lines := strings.Split(result, "\n")
+//				// assert.Equal(t, len(ips), len(lines)-1)
+//				// assert.Equal(t, len(scales.tailscales), len(lines)-1)
 //
-// 				peerIps := getIPsfromIPNstate(status)
+//				peerIps := getIPsfromIPNstate(status)
 //
-// 				// Check that all hosts is present in all hosts status
-// 				for ipHostname, ip := range ips {
-// 					if hostname != ipHostname {
-// 						assert.Contains(t, peerIps, ip)
-// 					}
-// 				}
-// 			})
-// 		}
-// 	}
+//				// Check that all hosts is present in all hosts status
+//				for ipHostname, ip := range ips {
+//					if hostname != ipHostname {
+//						assert.Contains(t, peerIps, ip)
+//					}
+//				}
+//			})
+//		}
+//	}
 // }
 
 func getIPsfromIPNstate(status ipnstate.Status) []netaddr.IP {
@@ -607,6 +608,17 @@ func (s *IntegrationTestSuite) TestTailDrop() {
 		apiURLs, err := getAPIURLs(scales.tailscales)
 		assert.Nil(s.T(), err)
 
+		retry := func(times int, sleepInverval time.Duration,doWork func() error) (err error) {
+			for attempts := 0; attempts < times; attempts++ {
+				err = doWork()
+				if err == nil {
+					return
+				}
+				time.Sleep(sleepInverval)
+			}
+			return
+		}
+
 		for hostname, tailscale := range scales.tailscales {
 			command := []string{"touch", fmt.Sprintf("/tmp/file_from_%s", hostname)}
 			_, err := ExecuteCommand(
@@ -628,25 +640,40 @@ func (s *IntegrationTestSuite) TestTailDrop() {
 
 					// TODO(juanfont): We still have some issues with the test infrastructure, so
 					// lets run curl multiple times until it works.
-
-					// Hmm... Ok, but why does it not work in userspace networking mode?
 					command := []string{
-						"tailscale", "file", "cp",
+						"curl",
+						"--retry-connrefused",
+						"--retry-delay",
+						"30",
+						"--retry",
+						"10",
+						"--connect-timeout",
+						"60",
+						"-X",
+						"PUT",
+						"--upload-file",
 						fmt.Sprintf("/tmp/file_from_%s", hostname),
-						fmt.Sprintf("%s:", peername),
+						fmt.Sprintf(
+							"%s/v0/put/file_from_%s",
+							peerAPI,
+							hostname,
+						),
 					}
-					fmt.Printf(
-						"Sending file from %s to %s (%s)\n",
-						hostname,
-						peername,
-						peerAPI,
-					)
-					_, err := ExecuteCommand(
-						&tailscale,
-						command,
-						[]string{},
-						ExecuteCommandTimeout(60 * time.Second),
-					)
+					retry(10, 1 * time.Second, func() error {
+						fmt.Printf(
+							"Sending file from %s to %s (%s)\n",
+							hostname,
+							peername,
+							peerAPI,
+						)
+						_, err := ExecuteCommand(
+							&tailscale,
+							command,
+							[]string{},
+							ExecuteCommandTimeout(60*time.Second),
+						)
+						return err
+					})
 					assert.Nil(t, err)
 				})
 			}

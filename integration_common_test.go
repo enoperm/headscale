@@ -15,6 +15,7 @@ import (
 )
 
 const DOCKER_EXECUTE_TIMEOUT = 10 * time.Second
+
 var IpPrefix4 = netaddr.MustParseIPPrefix("100.64.0.0/10")
 var IpPrefix6 = netaddr.MustParseIPPrefix("fd7a:115c:a1e0::/48")
 
@@ -99,4 +100,11 @@ func DockerRestartPolicy(config *docker.HostConfig) {
 	config.RestartPolicy = docker.RestartPolicy{
 		Name: "no",
 	}
+}
+
+func DockerAllowLocalIPv6(config *docker.HostConfig) {
+	if config.Sysctls == nil {
+		config.Sysctls = make(map[string]string, 1)
+	}
+	config.Sysctls["net.ipv6.conf.all.disable_ipv6"] = "0"
 }

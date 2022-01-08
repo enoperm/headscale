@@ -184,7 +184,7 @@ func (h *Headscale) expandAlias(alias string) ([]string, error) {
 			if err != nil {
 				return nil, errInvalidNamespace
 			}
-			for _, node := range *nodes {
+			for _, node := range nodes {
 				ips = append(ips, node.IPAddresses.ToStringSlice()...)
 			}
 		}
@@ -218,8 +218,8 @@ func (h *Headscale) expandAlias(alias string) ([]string, error) {
 
 				// FIXME: Check TagOwners allows this
 				for _, t := range hostinfo.RequestTags {
-					if s[4:] == t {
-						ips = append(ips, m.IPAddresses.ToStringSlice()...)
+					if alias[4:] == t {
+						ips = append(ips, machine.IPAddresses.ToStringSlice()...)
 
 						break
 					}
@@ -237,7 +237,7 @@ func (h *Headscale) expandAlias(alias string) ([]string, error) {
 			return nil, err
 		}
 		ips := []string{}
-		for _, n := range *nodes {
+		for _, n := range nodes {
 			ips = append(ips, n.IPAddresses.ToStringSlice()...)
 		}
 

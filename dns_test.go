@@ -10,8 +10,10 @@ import (
 )
 
 func (s *Suite) TestMagicDNSRootDomains100(c *check.C) {
-	prefix := netaddr.MustParseIPPrefix("100.64.0.0/10")
-	domains := generateMagicDNSRootDomains(prefix)
+	prefixes := []netaddr.IPPrefix{
+		netaddr.MustParseIPPrefix("100.64.0.0/10"),
+	}
+	domains := generateMagicDNSRootDomains(prefixes)
 
 	found := false
 	for _, domain := range domains {
@@ -45,8 +47,10 @@ func (s *Suite) TestMagicDNSRootDomains100(c *check.C) {
 }
 
 func (s *Suite) TestMagicDNSRootDomains172(c *check.C) {
-	prefix := netaddr.MustParseIPPrefix("172.16.0.0/16")
-	domains := generateMagicDNSRootDomains(prefix)
+	prefixes := []netaddr.IPPrefix{
+		netaddr.MustParseIPPrefix("172.16.0.0/16"),
+	}
+	domains := generateMagicDNSRootDomains(prefixes)
 
 	found := false
 	for _, domain := range domains {

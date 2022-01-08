@@ -91,7 +91,7 @@ func (s *Suite) TestPortNamespace(c *check.C) {
 
 	_, err = app.GetMachine("testnamespace", "testmachine")
 	c.Assert(err, check.NotNil)
-	ip, _ := app.getAvailableIPs()
+	ips, _ := app.getAvailableIPs()
 	machine := Machine{
 		ID:             0,
 		MachineKey:     "foo",
@@ -163,5 +163,5 @@ func (s *Suite) TestPortGroup(c *check.C) {
 	c.Assert(rules[0].SrcIPs, check.HasLen, 1)
 	c.Assert(rules[0].SrcIPs[0], check.Not(check.Equals), "not an ip")
 	c.Assert(len(ips), check.Equals, 1)
-	c.Assert(rules[0].SrcIPs[0], check.Equals, ip.String())
+	c.Assert(rules[0].SrcIPs[0], check.Equals, ips[0].String())
 }

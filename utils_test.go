@@ -56,7 +56,7 @@ func (s *Suite) TestGetUsedIps(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	c.Assert(len(machine1.IPAddresses), check.Equals, 1)
-	c.Assert(machine1.IPAddress[0], check.Equals, expected.String())
+	c.Assert(machine1.IPAddresses[0], check.Equals, expected)
 }
 
 func (s *Suite) TestGetMultiIp(c *check.C) {
@@ -64,7 +64,7 @@ func (s *Suite) TestGetMultiIp(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	for index := 1; index <= 350; index++ {
-		ips, err := app.getAvailableIP()
+		ips, err := app.getAvailableIPs()
 		c.Assert(err, check.IsNil)
 
 		pak, err := app.CreatePreAuthKey(namespace.Name, false, false, nil)
@@ -83,7 +83,7 @@ func (s *Suite) TestGetMultiIp(c *check.C) {
 			Registered:     true,
 			RegisterMethod: RegisterMethodAuthKey,
 			AuthKeyID:      uint(pak.ID),
-			IPAddresses:    ips,
+			IPAddresses:    MachineAddresses(ips),
 		}
 		app.db.Save(&machine)
 	}
@@ -103,14 +103,14 @@ func (s *Suite) TestGetMultiIp(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(len(machine1.IPAddresses), check.Equals, 1)
 	c.Assert(
-		m1.IPAddresses[0],
+		machine1.IPAddresses[0],
 		check.Equals,
 		netaddr.MustParseIP("10.27.0.1"),
 	)
 
 	machine50, err := app.GetMachineByID(50)
 	c.Assert(err, check.IsNil)
-	c.Assert(len(m50.IPAddresses), check.Equals, 1)
+	c.Assert(len(machine50.IPAddresses), check.Equals, 1)
 	c.Assert(
 		machine50.IPAddresses[0],
 		check.Equals,

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"encoding/hex"
 	"github.com/fatih/set"
 	"inet.af/netaddr"
 	"tailscale.com/tailcfg"
@@ -42,6 +41,9 @@ func generateMagicDNSRootDomains(ipPrefixes []netaddr.IPPrefix) []dnsname.FQDN {
 		switch ipPrefix.IP().BitLen() {
 		case 32:
 			generateDnsRoot = generateIPv4DNSRootDomain
+
+		case 128:
+			generateDnsRoot = generateIPv6DNSRootDomain
 
 		default:
 			panic(fmt.Sprintf("unsupported IP version with address length %d", ipPrefix.IP().BitLen()))
@@ -85,6 +87,11 @@ func generateIPv4DNSRootDomain(ipPrefix netaddr.IPPrefix) (fqdns []dnsname.FQDN)
 		fqdns = append(fqdns, fqdn)
 	}
 
+	return
+}
+
+func generateIPv6DNSRootDomain(ipPrefix netaddr.IPPrefix) (fqdns []dnsname.FQDN) {
+	// TODO: stub
 	return
 }
 

@@ -148,6 +148,7 @@ func (s *Suite) TestGetMapResponseUserProfiles(c *check.C) {
 		Registered:     true,
 		RegisterMethod: RegisterMethodAuthKey,
 		IPAddresses:    []netaddr.IP{netaddr.MustParseIP("100.64.0.1")},
+		AuthKeyID:      uint(preAuthKeyShared1.ID),
 	}
 	app.db.Save(machineInShared1)
 

@@ -41,7 +41,7 @@ func LoadConfig(path string) error {
 	viper.SetDefault("tls_letsencrypt_cache_dir", "/var/www/.cache")
 	viper.SetDefault("tls_letsencrypt_challenge_type", "HTTP-01")
 
-	viper.SetDefault("ip_prefixes", "100.64.0.0/10")
+	viper.SetDefault("ip_prefixes", []string{"100.64.0.0/10"})
 
 	viper.SetDefault("log_level", "info")
 

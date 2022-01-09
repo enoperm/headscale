@@ -91,7 +91,43 @@ func generateIPv4DNSRootDomain(ipPrefix netaddr.IPPrefix) (fqdns []dnsname.FQDN)
 }
 
 func generateIPv6DNSRootDomain(ipPrefix netaddr.IPPrefix) (fqdns []dnsname.FQDN) {
-	// TODO: stub
+	maskBits, _ := ipPrefix.IPNet().Mask.Size()
+	expanded := ipPrefix.IP().StringExpanded()
+	nibbleStr := strings.Map(func(r rune) rune {
+		if r == ':' {
+			return -1
+		}
+		return r
+	}, expanded)
+
+	// TODO?: that does not look the most efficient implementation,
+	// but the inputs are not so long as to cause problems,
+	// and from what I can see, the generateMagicDNSRootDomains
+	// function is called only once over the lifetime of a server process.
+	prefixConstantParts := []string{}
+	for i := 0; i < maskBits/4; i++ {
+		prefixConstantParts = append([]string{string(nibbleStr[i])}, prefixConstantParts...)
+	}
+
+	makeDomain := func(variablePrefix ...string) (dnsname.FQDN, error) {
+		prefix := strings.Join(append(variablePrefix, prefixConstantParts...), ".")
+		return dnsname.ToFQDN(fmt.Sprintf("%s.ip6.arpa", prefix))
+	}
+
+	if maskBits%4 == 0 {
+		dom, _ := makeDomain()
+		fqdns = append(fqdns, dom)
+	}
+
+	for i := 0; i < (2 << (maskBits % 4)); i++ {
+		varNibble := fmt.Sprintf("%x", i)
+		dom, err := makeDomain(varNibble)
+		if err != nil {
+			continue
+		}
+		fqdns = append(fqdns, dom)
+	}
+
 	return
 }
 

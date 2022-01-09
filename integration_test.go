@@ -165,8 +165,10 @@ func (s *IntegrationTestSuite) tailscaleContainer(
 		Networks: []*dockertest.Network{&s.network},
 		Cmd: []string{
 			"tailscaled",
-			"--tun=userspace-networking",
-			"--socks5-server=localhost:1055",
+			"--tun=tsdev",
+		},
+		Env: []string{
+			"TS_DEBUG_NETSTACK=true",
 		},
 	}
 
@@ -175,6 +177,7 @@ func (s *IntegrationTestSuite) tailscaleContainer(
 		tailscaleOptions,
 		DockerRestartPolicy,
 		DockerAllowLocalIPv6,
+		DockerAllowNetworkAdministration,
 	)
 	if err != nil {
 		log.Fatalf("Could not start resource: %s", err)
@@ -605,10 +608,9 @@ func (s *IntegrationTestSuite) TestTailDrop() {
 	for _, scales := range s.namespaces {
 		ips, err := getIPs(scales.tailscales)
 		assert.Nil(s.T(), err)
-		apiURLs, err := getAPIURLs(scales.tailscales)
 		assert.Nil(s.T(), err)
 
-		retry := func(times int, sleepInverval time.Duration,doWork func() error) (err error) {
+		retry := func(times int, sleepInverval time.Duration, doWork func() error) (err error) {
 			for attempts := 0; attempts < times; attempts++ {
 				err = doWork()
 				if err == nil {
@@ -627,44 +629,21 @@ func (s *IntegrationTestSuite) TestTailDrop() {
 				[]string{},
 			)
 			assert.Nil(s.T(), err)
-			for peername, peerIPs := range ips {
+			for peername, _ := range ips {
 				if peername == hostname {
 					continue
 				}
 				s.T().Run(fmt.Sprintf("%s-%s", hostname, peername), func(t *testing.T) {
-					// Under normal circumstances, we should be able to send a file
-					// using `tailscale file cp` - but not in userspace networking mode
-					// So curl!
-					peerAPI, ok := apiURLs[peerIPs[0]]
-					assert.True(t, ok)
-
-					// TODO(juanfont): We still have some issues with the test infrastructure, so
-					// lets run curl multiple times until it works.
 					command := []string{
-						"curl",
-						"--retry-connrefused",
-						"--retry-delay",
-						"30",
-						"--retry",
-						"10",
-						"--connect-timeout",
-						"60",
-						"-X",
-						"PUT",
-						"--upload-file",
+						"tailscale", "file", "cp",
 						fmt.Sprintf("/tmp/file_from_%s", hostname),
-						fmt.Sprintf(
-							"%s/v0/put/file_from_%s",
-							peerAPI,
-							hostname,
-						),
+						fmt.Sprintf("%s:", peername),
 					}
-					retry(10, 1 * time.Second, func() error {
+					retry(10, 1*time.Second, func() error {
 						fmt.Printf(
-							"Sending file from %s to %s (%s)\n",
+							"Sending file from %s to %s\n",
 							hostname,
 							peername,
-							peerAPI,
 						)
 						_, err := ExecuteCommand(
 							&tailscale,
@@ -730,42 +709,33 @@ func (s *IntegrationTestSuite) TestMagicDNS() {
 		ips, err := getIPs(scales.tailscales)
 		assert.Nil(s.T(), err)
 		for hostname, tailscale := range scales.tailscales {
-			for peername, peerIPs := range ips {
-				for peerAddressCount, ip := range peerIPs {
-					// TODO: Currently, MagicDNS is IPv4 only.
-					// This statement was added to allow for IPv4 related
-					// integration tests to run so as to avoid breaking them while working on IPv6 support
-					if !ip.Is4() {
-						continue
-					}
-					if peername == hostname {
-						continue
-					}
-					s.T().Run(fmt.Sprintf("%s-%s-%d", hostname, peername, peerAddressCount), func(t *testing.T) {
-						command := []string{
-							"tailscale", "ping",
-							"--timeout=10s",
-							"--c=20",
-							"--until-direct=true",
-							fmt.Sprintf("%s.%s.headscale.net", peername, namespace),
-						}
-
-						fmt.Printf(
-							"Pinging using Hostname (magicdns) from %s to %s (%s)\n",
-							hostname,
-							peername,
-							ip,
-						)
-						result, err := ExecuteCommand(
-							&tailscale,
-							command,
-							[]string{},
-						)
-						assert.Nil(t, err)
-						fmt.Printf("Result for %s: %s\n", hostname, result)
-						assert.Contains(t, result, "pong")
-					})
+			for peername, _ := range ips {
+				if peername == hostname {
+					continue
 				}
+				s.T().Run(fmt.Sprintf("%s-%s", hostname, peername), func(t *testing.T) {
+					command := []string{
+						"tailscale", "ping",
+						"--timeout=10s",
+						"--c=20",
+						"--until-direct=true",
+						fmt.Sprintf("%s.%s.headscale.net", peername, namespace),
+					}
+
+					fmt.Printf(
+						"Pinging using Hostname (magicdns) from %s to %s\n",
+						hostname,
+						peername,
+					)
+					result, err := ExecuteCommand(
+						&tailscale,
+						command,
+						[]string{},
+					)
+					assert.Nil(t, err)
+					fmt.Printf("Result for %s: %s\n", hostname, result)
+					assert.Contains(t, result, "pong")
+				})
 			}
 		}
 	}

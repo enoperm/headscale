@@ -108,3 +108,12 @@ func DockerAllowLocalIPv6(config *docker.HostConfig) {
 	}
 	config.Sysctls["net.ipv6.conf.all.disable_ipv6"] = "0"
 }
+
+func DockerAllowNetworkAdministration(config *docker.HostConfig) {
+	config.CapAdd = append(config.CapAdd, "NET_ADMIN")
+	config.Mounts = append(config.Mounts, docker.HostMount{
+		Type:   "bind",
+		Source: "/dev/net/tun",
+		Target: "/dev/net/tun",
+	})
+}

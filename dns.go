@@ -119,7 +119,7 @@ func generateIPv6DNSRootDomain(ipPrefix netaddr.IPPrefix) (fqdns []dnsname.FQDN)
 		fqdns = append(fqdns, dom)
 	}
 
-	for i := 0; i < (2 << (maskBits % 4)); i++ {
+	for i := 0; i < (1 << (maskBits % 4)); i++ {
 		varNibble := fmt.Sprintf("%x", i)
 		dom, err := makeDomain(varNibble)
 		if err != nil {

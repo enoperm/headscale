@@ -50,14 +50,14 @@ func SaveLog(
 	log.Printf("Saving logs for %s to %s\n", resource.Container.Name, basePath)
 
 	stdoutPath := path.Join(basePath, resource.Container.Name+".stdout.log")
-	stdout, err := os.OpenFile(stdoutPath, os.O_CREATE, filePerm)
+	stdout, err := os.OpenFile(stdoutPath, os.O_CREATE|os.O_WRONLY, filePerm)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to open stdout for writing: %w", err)
 	}
 	defer stdout.Close()
 
 	stderrPath := path.Join(basePath, resource.Container.Name+".stderr.log")
-	stderr, err := os.OpenFile(stderrPath, os.O_CREATE, filePerm)
+	stderr, err := os.OpenFile(stderrPath, os.O_CREATE|os.O_WRONLY, filePerm)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to open stderr for writing: %w", err)
 	}

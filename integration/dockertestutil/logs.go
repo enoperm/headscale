@@ -2,7 +2,6 @@ package dockertestutil
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"fmt"
 	"io"

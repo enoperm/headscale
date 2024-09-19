@@ -1,8 +1,10 @@
 package dockertestutil
 
 import (
+	"bufio"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -46,35 +48,29 @@ func SaveLog(
 		return "", "", err
 	}
 
-	// Wouldn't it be simpler to
-	// open and wrap the destination files in a
-	// bufio.Writer, and pass those in docker.LogsOptions?
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-
-	err = WriteLog(pool, resource, &stdout, &stderr)
-	if err != nil {
-		return "", "", err
-	}
-
 	log.Printf("Saving logs for %s to %s\n", resource.Container.Name, basePath)
 
 	stdoutPath := path.Join(basePath, resource.Container.Name+".stdout.log")
-	err = os.WriteFile(
-		stdoutPath,
-		stdout.Bytes(),
-		filePerm,
-	)
+	stdout, err := os.OpenFile(stdoutPath, os.O_CREATE, filePerm)
 	if err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("failed to open stdout for writing: %w", err)
 	}
+	defer stdout.Close()
 
 	stderrPath := path.Join(basePath, resource.Container.Name+".stderr.log")
-	err = os.WriteFile(
-		stderrPath,
-		stderr.Bytes(),
-		filePerm,
-	)
+	stderr, err := os.OpenFile(stderrPath, os.O_CREATE, filePerm)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to open stderr for writing: %w", err)
+	}
+	defer stderr.Close()
+
+	bufOut := bufio.NewWriter(stdout)
+	bufErr := bufio.NewWriter(stderr)
+
+	defer bufOut.Flush()
+	defer bufErr.Flush()
+
+	err = WriteLog(pool, resource, bufOut, bufErr)
 	if err != nil {
 		return "", "", err
 	}
